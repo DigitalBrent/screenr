@@ -27,6 +27,13 @@ app.get('/screenshot', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
+        // 🔹 Set Full Desktop Width (1920px)
+        await page.setViewport({
+            width: 1920,   // Full HD width
+            height: 1080,  // Adjust height if needed
+            deviceScaleFactor: 1
+        });
+
         // 🔹 Remove sticky headers, chat boxes, and footers before capturing the screenshot
         await page.evaluate(() => {
             const removeSelectors = [
