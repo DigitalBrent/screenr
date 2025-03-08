@@ -8,7 +8,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/screenshot', async (req, res) => {
-    let url = req.query.url;
+    let url = req.query.url.split(',')[0];  // Ensure only one URL is used
+
 
     // Decode the URL to handle encoding issues
     if (url) {
