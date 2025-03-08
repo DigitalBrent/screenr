@@ -39,10 +39,13 @@ app.get('/screenshot', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // Scroll to the bottom to trigger lazy loading
-        await autoScroll(page);
+        // Force full scrolling until no more new content loads
+        await scrollUntilLoaded(page);
 
+        // Extra delay to ensure animations & AJAX finish loading
+        await page.waitForTimeout(2000);
 
+        // Take full-page screenshot
         const screenshot = await page.screenshot({ encoding: 'base64', fullPage: true });
 
         await browser.close();
@@ -57,21 +60,33 @@ app.get('/screenshot', async (req, res) => {
 
 app.listen(PORT, () => console.log(`🚀 Screenshot service running on port ${PORT}`));
 
-async function autoScroll(page) {
+async function scrollUntilLoaded(page) {
     await page.evaluate(async () => {
-        await new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             let totalHeight = 0;
-            let distance = 500; // Scroll step size
-            let timer = setInterval(() => {
-                let scrollHeight = document.body.scrollHeight;
-                window.scrollBy(0, distance);
-                totalHeight += distance;
+            let lastHeight = 0;
+            let scrollStep = 500; // Scroll step size
+            let maxAttempts = 15; // Prevent infinite loops
 
-                if (totalHeight >= scrollHeight) {
-                    clearInterval(timer);
-                    resolve();
+            function scroll() {
+                window.scrollBy(0, scrollStep);
+                totalHeight += scrollStep;
+
+                if (document.body.scrollHeight !== lastHeight) {
+                    lastHeight = document.body.scrollHeight;
+                    maxAttempts = 15; // Reset attempts if content loads
+                } else {
+                    maxAttempts--; // Reduce attempts if nothing changes
                 }
-            }, 100); // Adjust speed (milliseconds)
+
+                if (maxAttempts <= 0) {
+                    resolve();
+                } else {
+                    setTimeout(scroll, 500); // Wait & scroll again
+                }
+            }
+
+            scroll();
         });
     });
 }
