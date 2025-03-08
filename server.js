@@ -8,8 +8,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/screenshot', async (req, res) => {
-    let url = req.query.url;
-console.log("🚀 Raw URL value:", url, "| Type:", typeof url);
+    let url = Array.isArray(req.query.url) ? req.query.url[0] : req.query.url;  // Ensure we get the first URL if it's an array
+
+    // Convert to a string and remove unnecessary characters
+    url = String(url).trim().replace(/;$/, ''); // Trim spaces and remove any trailing `;`
+
+    console.log("🚀 Cleaned URL value:", url, "| Type:", typeof url);
+
 
 
 
