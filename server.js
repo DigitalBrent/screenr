@@ -39,6 +39,10 @@ app.get('/screenshot', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
+        // Scroll to the bottom to trigger lazy loading
+        await autoScroll(page);
+
+
         const screenshot = await page.screenshot({ encoding: 'base64', fullPage: true });
 
         await browser.close();
@@ -52,3 +56,22 @@ app.get('/screenshot', async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`🚀 Screenshot service running on port ${PORT}`));
+
+async function autoScroll(page) {
+    await page.evaluate(async () => {
+        await new Promise((resolve, reject) => {
+            let totalHeight = 0;
+            let distance = 500; // Scroll step size
+            let timer = setInterval(() => {
+                let scrollHeight = document.body.scrollHeight;
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+
+                if (totalHeight >= scrollHeight) {
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, 100); // Adjust speed (milliseconds)
+        });
+    });
+}
