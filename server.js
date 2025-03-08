@@ -43,7 +43,7 @@ app.get('/screenshot', async (req, res) => {
         await scrollUntilLoaded(page);
 
         // Extra delay to ensure animations & AJAX finish loading
-        await page.waitForTimeout(2000);
+        await new Promise(r => setTimeout(r, 2000));
 
         // Take full-page screenshot
         const screenshot = await page.screenshot({ encoding: 'base64', fullPage: true });
