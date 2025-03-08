@@ -8,22 +8,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/screenshot', async (req, res) => {
-    let url = Array.isArray(req.query.url) ? req.query.url[0] : req.query.url;  // Ensure we get the first URL if it's an array
-
-    // Convert to a string and remove unnecessary characters
-    url = String(url).trim().replace(/;$/, ''); // Trim spaces and remove any trailing `;`
+    let url = Array.isArray(req.query.url) ? req.query.url[0] : req.query.url;  
+    url = String(url).trim().replace(/;$/, ''); // Ensure URL is a proper string
 
     console.log("🚀 Cleaned URL value:", url, "| Type:", typeof url);
-
-
-
-
-    // Decode the URL to handle encoding issues
-    if (url) {
-        url = decodeURIComponent(url);
-    }
-
-    console.log("🚀 Received URL:", url); // Log the URL for debugging
 
     if (!url || typeof url !== 'string' || !url.startsWith("http")) {
         console.error("❌ Invalid URL received:", url);
@@ -39,19 +27,32 @@ app.get('/screenshot', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        await page.setViewport({
-            width: 1920,   // Full HD width
-            height: 1080,  // Height (can be adjusted)
-            deviceScaleFactor: 1, // Keeps scale at 100%
-        });        
+        // 🔹 Remove sticky headers, chat boxes, and footers before capturing the screenshot
+        await page.evaluate(() => {
+            const removeSelectors = [
+                'header', 
+                '.sticky', 
+                '[id*="chat"]', 
+                '[class*="chat"]', 
+                '[class*="cookie"]',
+                '[class*="popup"]',
+                'footer', 
+                '.footer', 
+                '[id*="footer"]'
+            ];
 
-        // Force full scrolling until no more new content loads
+            removeSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => el.remove());
+            });
+        });
+
+        // 🔹 Scroll through the page to trigger lazy-loaded content
         await scrollUntilLoaded(page);
 
-        // Extra delay to ensure animations & AJAX finish loading
+        // 🔹 Extra delay to allow animations & AJAX to finish loading
         await new Promise(r => setTimeout(r, 2000));
 
-        // Take full-page screenshot
+        // 🔹 Take full-page screenshot
         const screenshot = await page.screenshot({ encoding: 'base64', fullPage: true });
 
         await browser.close();
@@ -64,15 +65,14 @@ app.get('/screenshot', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`🚀 Screenshot service running on port ${PORT}`));
-
+// 🔹 Scroll function to ensure all content is loaded
 async function scrollUntilLoaded(page) {
     await page.evaluate(async () => {
         return new Promise((resolve) => {
             let totalHeight = 0;
             let lastHeight = 0;
-            let scrollStep = 500; // Scroll step size
-            let maxAttempts = 15; // Prevent infinite loops
+            let scrollStep = 500;
+            let maxAttempts = 15; 
 
             function scroll() {
                 window.scrollBy(0, scrollStep);
@@ -80,15 +80,15 @@ async function scrollUntilLoaded(page) {
 
                 if (document.body.scrollHeight !== lastHeight) {
                     lastHeight = document.body.scrollHeight;
-                    maxAttempts = 15; // Reset attempts if content loads
+                    maxAttempts = 15;
                 } else {
-                    maxAttempts--; // Reduce attempts if nothing changes
+                    maxAttempts--;
                 }
 
                 if (maxAttempts <= 0) {
                     resolve();
                 } else {
-                    setTimeout(scroll, 500); // Wait & scroll again
+                    setTimeout(scroll, 500);
                 }
             }
 
@@ -96,3 +96,6 @@ async function scrollUntilLoaded(page) {
         });
     });
 }
+
+// Start the Express server
+app.listen(PORT, () => console.log(`🚀 Screenshot service running on port ${PORT}`));
