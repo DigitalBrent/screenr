@@ -46,7 +46,7 @@ app.get('/screenshot', async (req, res) => {
                 'footer', 
                 '.footer', 
                 '[id*="footer"]',
-                '.podium-website-widget'
+                '#podium-website-widget'
             ];
 
             removeSelectors.forEach(selector => {
