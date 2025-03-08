@@ -39,6 +39,12 @@ app.get('/screenshot', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
+        await page.setViewport({
+            width: 1920,   // Full HD width
+            height: 1080,  // Height (can be adjusted)
+            deviceScaleFactor: 1, // Keeps scale at 100%
+        });        
+
         // Force full scrolling until no more new content loads
         await scrollUntilLoaded(page);
 
