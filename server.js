@@ -60,12 +60,13 @@ app.get('/screenshot', async (req, res) => {
         // 🔹 Extra delay to allow animations & AJAX to finish loading
         await new Promise(r => setTimeout(r, 2000));
 
-        // 🔹 Take full-page screenshot
+        // 🔹 Take full-page screenshot (base64-encoded)
         const screenshot = await page.screenshot({ encoding: 'base64', fullPage: true });
 
         await browser.close();
 
-        res.json({ image: data:image/png;base64,${screenshot} });
+        // Send back a data URL
+        res.json({ image: `data:image/png;base64,${screenshot}` });
 
     } catch (error) {
         console.error("❌ Error processing screenshot:", error);
@@ -106,4 +107,4 @@ async function scrollUntilLoaded(page) {
 }
 
 // Start the Express server
-app.listen(PORT, () => console.log(🚀 Screenshot service running on port ${PORT}));
+app.listen(PORT, () => console.log(`🚀 Screenshot service running on port ${PORT}`));
