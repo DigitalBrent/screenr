@@ -1,16 +1,11 @@
 const express = require('express');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const fs = require('fs');
-const path = require('path');
 
 puppeteer.use(StealthPlugin());
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Serve static files from the "public" folder
-app.use(express.static('public'));
 
 app.get('/screenshot', async (req, res) => {
     let url = Array.isArray(req.query.url) ? req.query.url[0] : req.query.url;  
@@ -32,14 +27,14 @@ app.get('/screenshot', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // Set Full Desktop Width (1920px)
+        // 🔹 Set Full Desktop Width (1920px)
         await page.setViewport({
-            width: 1920,
-            height: 1080,
+            width: 1920,   // Full HD width
+            height: 1080,  // Adjust height if needed
             deviceScaleFactor: 1
         });
 
-        // Remove unwanted elements before capturing the screenshot
+        // 🔹 Remove sticky headers, chat boxes, and footers before capturing the screenshot
         await page.evaluate(() => {
             const removeSelectors = [
                 'header', 
@@ -59,29 +54,18 @@ app.get('/screenshot', async (req, res) => {
             });
         });
 
-        // Scroll through the page to trigger lazy-loaded content
+        // 🔹 Scroll through the page to trigger lazy-loaded content
         await scrollUntilLoaded(page);
 
-        // Extra delay to allow animations & AJAX to finish loading
+        // 🔹 Extra delay to allow animations & AJAX to finish loading
         await new Promise(r => setTimeout(r, 2000));
 
-        // Take full-page screenshot in base64 format
+        // 🔹 Take full-page screenshot
         const screenshot = await page.screenshot({ encoding: 'base64', fullPage: true });
 
         await browser.close();
 
-        // Create a unique file name and save the screenshot to the public folder
-        const timestamp = Date.now();
-        const fileName = `screenshot-${timestamp}.png`;
-        const filePath = path.join(__dirname, 'public', fileName);
-
-        // Write the file with base64 encoding
-        fs.writeFileSync(filePath, screenshot, 'base64');
-
-        // Build the URL using request info
-        const imageUrl = `${req.protocol}://${req.get('host')}/${fileName}`;
-
-        res.json({ url: imageUrl });
+        res.json({ image: data:image/png;base64,${screenshot} });
 
     } catch (error) {
         console.error("❌ Error processing screenshot:", error);
@@ -89,13 +73,13 @@ app.get('/screenshot', async (req, res) => {
     }
 });
 
-// Scroll function to ensure all content is loaded
+// 🔹 Scroll function to ensure all content is loaded
 async function scrollUntilLoaded(page) {
     await page.evaluate(async () => {
         return new Promise((resolve) => {
             let totalHeight = 0;
             let lastHeight = 0;
-            const scrollStep = 500;
+            let scrollStep = 500;
             let maxAttempts = 15; 
 
             function scroll() {
@@ -122,4 +106,4 @@ async function scrollUntilLoaded(page) {
 }
 
 // Start the Express server
-app.listen(PORT, () => console.log(`🚀 Screenshot service running on port ${PORT}`));
+app.listen(PORT, () => console.log(🚀 Screenshot service running on port ${PORT}));
